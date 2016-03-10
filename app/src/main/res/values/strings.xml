@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Lunchilicous</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string-array name="menu_items">
+        <item>Pizza</item>
+        <item>Sandwich</item>
+        <item>Pasta</item>
+        <item>Cheeseburger</item>
+        <item>Bottled Coke</item>
+        <item>Bottled Water</item>
+    </string-array>
+    <string-array name="item_descriptions">
+        <item>A 14in pepperoni with extra pizza.</item>
+        <item>Ham and cheese 12in toasted sub.</item>
+        <item>Hot spaghetti pasta served with unlimited bread sticks.</item>
+        <item>Bacon cheeseburger with your choice of toppings.</item>
+        <item>Chilled 16oz. bottle</item>
+        <item>Chilled 24oz. bottle</item>
+    </string-array>
+    <integer-array name="item_prices">
+        <item>3</item>
+        <item>5</item>
+        <item>8</item>
+        <item>5</item>
+        <item>2</item>
+        <item>1</item>
+    </integer-array>
+    <integer-array name="item_calories">
+        <item>285</item>
+        <item>340</item>
+        <item>75</item>
+        <item>303</item>
+        <item>184</item>
+        <item>0</item>
+    </integer-array>
+</resources>
