@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 
@@ -24,11 +25,6 @@ public class CartFragment extends ListFragment {
         void returnToFoodMenu();
     }
 
-    public static final String ARG_POSITION ="edu.soaress3.lunchilicious.ARG_POSITION";
-    public static final String ARG_FOOD_NAMES = "edu.soaress3.lunchilicious.ARG_FOOD_NAME";
-    public static final String ARG_FOOD_DESCRIPTION = "edu.soaress3.lunchilicious.ARG_FOOD_DESCRIPTION";
-    public static final String ARG_FOOD_PRICES = "edu.soaress3.lunchilicious.ARG_FOOD_PRICES";
-    public static final String ARG_FOOD_CALORIES = "edu.soaress3.lunchilicious.ARG_FOOD_CALORIES";
     public static final String ARG_FOOD_QUANTITIES = "edu.soaress3.lunchilicious.ARG_FOOD_QUANTITIES";
 
     private String[] mFoodNames;
@@ -36,7 +32,8 @@ public class CartFragment extends ListFragment {
     private int[] mFoodPrices;
     private int[] mFoodCalories;
     private int[] mFoodQuantities;
-    private ListView mCartsListView;
+    private int mOrderTotal;
+    private TextView mOrderTotalTextView;
     private OnReturnToFoodMenuListener mHostListener;
 
     @Override
@@ -48,12 +45,15 @@ public class CartFragment extends ListFragment {
         Bundle bundle = getArguments();
 
         if (bundle != null) {
-            mFoodNames = bundle.getStringArray(ARG_FOOD_NAMES);
-            mFoodDescriptions = bundle.getStringArray(ARG_FOOD_DESCRIPTION);
-            mFoodPrices = bundle.getIntArray(ARG_FOOD_PRICES);
-            mFoodCalories = bundle.getIntArray(ARG_FOOD_CALORIES);
             mFoodQuantities = bundle.getIntArray(ARG_FOOD_QUANTITIES);
         }
+
+        this.mFoodNames = getResources().getStringArray(R.array.menu_items);
+        this.mFoodDescriptions = getResources().getStringArray(R.array.item_descriptions);
+        this.mFoodCalories = getResources().getIntArray(R.array.item_calories);
+        this.mFoodPrices = getResources().getIntArray(R.array.item_prices);
+
+        this.mOrderTotal = this.orderTotal();
     }
 
     @Override
@@ -65,6 +65,7 @@ public class CartFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_cart, container, false);
+        mOrderTotalTextView = (TextView) view.findViewById (R.id.tv_order_total);
         return view;
     }
 
@@ -73,7 +74,7 @@ public class CartFragment extends ListFragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private FoodMenuItem[] getFoodMenuItems (){
+    private FoodMenuItem[] getFoodMenuItems() {
         ArrayList<FoodMenuItem> items = new ArrayList<FoodMenuItem>();;
 
         for (int i = 0; i < mFoodQuantities.length; i++){
@@ -90,12 +91,31 @@ public class CartFragment extends ListFragment {
         return menuItems;
     }
 
+    private int orderTotal (){
+        int total = 0;
+
+        for (int i = 0; i < mFoodQuantities.length; i++){
+            if (mFoodQuantities[i] > 0){
+                total += mFoodQuantities[i] * mFoodPrices[i];
+
+            }
+        }
+
+        return total;
+    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
         CartItemArrayAdapter adapter = new CartItemArrayAdapter(getActivity(), getFoodMenuItems());
         setListAdapter(adapter);
+        mOrderTotalTextView.setText(NumberFormat.getCurrencyInstance().format(mOrderTotal));
     }
 
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.action_shopping_cart).setVisible(false);
+        super.onPrepareOptionsMenu(menu);
+    }
 }

@@ -17,10 +17,6 @@ import java.text.NumberFormat;
 
 public class ItemDetailsFragment extends Fragment implements View.OnClickListener{
 
-    public interface OnReturnToFoodMenuListener {
-        void returnToFoodMenu();
-    }
-
     public interface OnItemAddedToCartListener {
         void itemAddedToCart (int itemId, int quantity);
     }
@@ -39,7 +35,6 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
     private NumberPicker mFoodQuantityNumberPicker;
     private Button mAddToCartButton;
     private int mPosition = 0;
-    private OnReturnToFoodMenuListener mReturnToFoodMenuListener;
     private OnItemAddedToCartListener mItemAddedToCartListener;
 
     @Override
@@ -57,7 +52,6 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
     @Override
     public void onAttach(Context activity) {
         super.onAttach(activity);
-        mReturnToFoodMenuListener = (OnReturnToFoodMenuListener) activity;
         mItemAddedToCartListener = (OnItemAddedToCartListener) activity;
     }
 
@@ -105,11 +99,6 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onClick(View v) {
-
-        if (R.id.btn_add_to_cart == v.getId()) {
-            mItemAddedToCartListener.itemAddedToCart(mPosition, getItemQuantity());
-        }
-        mReturnToFoodMenuListener.returnToFoodMenu();
-
+        mItemAddedToCartListener.itemAddedToCart(mPosition, getItemQuantity());
     }
 }

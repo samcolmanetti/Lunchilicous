@@ -44,7 +44,6 @@ public class CartItemArrayAdapter extends ArrayAdapter<FoodMenuItem> {
             rowView.setTag(viewHolder);
         }
 
-
         ViewHolder holder = (ViewHolder) rowView.getTag();
         FoodMenuItem item = items[position];
         holder.foodNameTextView.setText(item.getmFoodName());
@@ -55,4 +54,6 @@ public class CartItemArrayAdapter extends ArrayAdapter<FoodMenuItem> {
 
         return rowView;
     }
+
+
 }
