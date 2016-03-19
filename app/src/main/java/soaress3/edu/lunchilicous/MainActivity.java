@@ -1,6 +1,7 @@
 package soaress3.edu.lunchilicous;
 
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -14,6 +15,7 @@ public class MainActivity extends AppCompatActivity implements
         CartFragment.OnReturnToFoodMenuListener {
     private Menu mAppBarMenu;
     private int[] mFoodItemQuantities;
+    private int mPosition = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        if (findViewById(R.id.frame_container) != null) {
+        if (findViewById(R.id.food_menu_fragment) == null) {
 
             if (savedInstanceState != null) {
                 return;
@@ -31,9 +33,18 @@ public class MainActivity extends AppCompatActivity implements
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.add(R.id.frame_container, foodMenu);
             ft.commit();
-        }
-        else {
+        } else {
+            // large device is being used
+            ItemDetailsFragment foodItem = new ItemDetailsFragment();
 
+            Bundle args = new Bundle();
+            args.putInt(ItemDetailsFragment.ARG_POSITION, mPosition);
+            foodItem.setArguments(args);
+
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.frame_container, foodItem);
+            transaction.addToBackStack("DETAILS");
+            transaction.commit();
         }
 
         int numberOfItems = getResources().getStringArray(R.array.menu_items).length;
@@ -51,19 +62,17 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        // shopping cart selected since it's the only item in the menu
+        CartFragment cartFragment = new CartFragment();
 
-        if (id == R.id.action_shopping_cart) {
-            CartFragment cartFragment = new CartFragment();
+        Bundle args = new Bundle();
+        args.putIntArray(CartFragment.ARG_FOOD_QUANTITIES, mFoodItemQuantities);
+        cartFragment.setArguments(args);
 
-            Bundle args = new Bundle();
-            args.putIntArray(CartFragment.ARG_FOOD_QUANTITIES, mFoodItemQuantities);
-            cartFragment.setArguments(args);
-
-            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            ft.replace(R.id.frame_container, cartFragment);
-            ft.addToBackStack("CART");
-            ft.commit();
-        }
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.replace(R.id.frame_container, cartFragment);
+        ft.addToBackStack("CART");
+        ft.commit();
 
         return super.onOptionsItemSelected(item);
     }
@@ -71,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onFoodMenuItemSelected(int position) {
         ItemDetailsFragment foodItem = new ItemDetailsFragment();
+        this.mPosition = position;
 
         Bundle args = new Bundle();
         args.putInt(ItemDetailsFragment.ARG_POSITION, position);
@@ -94,7 +104,20 @@ public class MainActivity extends AppCompatActivity implements
         } else {
             Toast.makeText(MainActivity.this, "NULL FoodQuantities", Toast.LENGTH_SHORT).show();
         }
+        this.mPosition = 0;
+        FragmentManager fm = getSupportFragmentManager();
+        fm.popBackStack("DETAILS",fm.POP_BACK_STACK_INCLUSIVE);
 
-        getSupportFragmentManager().popBackStack();
+        ItemDetailsFragment foodItem = new ItemDetailsFragment();
+
+        Bundle args = new Bundle();
+        args.putInt(ItemDetailsFragment.ARG_POSITION, mPosition);
+        foodItem.setArguments(args);
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.frame_container, foodItem);
+        transaction.addToBackStack("DETAILS");
+        transaction.commit();
+
     }
 }
