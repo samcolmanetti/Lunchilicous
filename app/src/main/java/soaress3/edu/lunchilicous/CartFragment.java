@@ -21,9 +21,6 @@ import java.util.ArrayList;
 
 
 public class CartFragment extends ListFragment {
-    public interface OnReturnToFoodMenuListener {
-        void returnToFoodMenu();
-    }
 
     public static final String ARG_FOOD_QUANTITIES = "edu.soaress3.lunchilicious.ARG_FOOD_QUANTITIES";
 
@@ -33,8 +30,8 @@ public class CartFragment extends ListFragment {
     private int[] mFoodCalories;
     private int[] mFoodQuantities;
     private int mOrderTotal;
+
     private TextView mOrderTotalTextView;
-    private OnReturnToFoodMenuListener mHostListener;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,6 +39,7 @@ public class CartFragment extends ListFragment {
 
         setHasOptionsMenu(true);
 
+        /*
         Bundle bundle = getArguments();
 
         if (bundle != null) {
@@ -54,12 +52,9 @@ public class CartFragment extends ListFragment {
         this.mFoodPrices = getResources().getIntArray(R.array.item_prices);
 
         this.mOrderTotal = this.orderTotal();
-    }
+        */
+        setRetainInstance(true);
 
-    @Override
-    public void onAttach(Context activity) {
-        super.onAttach(activity);
-        mHostListener = (OnReturnToFoodMenuListener) activity;
     }
 
     @Override
@@ -91,18 +86,7 @@ public class CartFragment extends ListFragment {
         return menuItems;
     }
 
-    private int orderTotal (){
-        int total = 0;
 
-        for (int i = 0; i < mFoodQuantities.length; i++){
-            if (mFoodQuantities[i] > 0){
-                total += mFoodQuantities[i] * mFoodPrices[i];
-
-            }
-        }
-
-        return total;
-    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -117,5 +101,53 @@ public class CartFragment extends ListFragment {
     public void onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.action_shopping_cart).setVisible(false);
         super.onPrepareOptionsMenu(menu);
+    }
+
+    public String[] getmFoodNames() {
+        return mFoodNames;
+    }
+
+    public void setmFoodNames(String[] mFoodNames) {
+        this.mFoodNames = mFoodNames;
+    }
+
+    public String[] getmFoodDescriptions() {
+        return mFoodDescriptions;
+    }
+
+    public void setmFoodDescriptions(String[] mFoodDescriptions) {
+        this.mFoodDescriptions = mFoodDescriptions;
+    }
+
+    public int[] getmFoodPrices() {
+        return mFoodPrices;
+    }
+
+    public void setmFoodPrices(int[] mFoodPrices) {
+        this.mFoodPrices = mFoodPrices;
+    }
+
+    public int[] getmFoodCalories() {
+        return mFoodCalories;
+    }
+
+    public void setmFoodCalories(int[] mFoodCalories) {
+        this.mFoodCalories = mFoodCalories;
+    }
+
+    public int[] getmFoodQuantities() {
+        return mFoodQuantities;
+    }
+
+    public void setmFoodQuantities(int[] mFoodQuantities) {
+        this.mFoodQuantities = mFoodQuantities;
+    }
+
+    public int getmOrderTotal() {
+        return mOrderTotal;
+    }
+
+    public void setmOrderTotal(int mOrderTotal) {
+        this.mOrderTotal = mOrderTotal;
     }
 }

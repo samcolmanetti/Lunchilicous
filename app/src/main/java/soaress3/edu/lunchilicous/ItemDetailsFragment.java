@@ -20,7 +20,7 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
     public interface OnItemAddedToCartListener {
         void itemAddedToCart (int itemId, int quantity);
     }
-    public static final String ARG_POSITION ="edu.soaress3.lunchilicious.ARG_POSITION";
+    public  static final String ARG_POSITION ="edu.soaress3.lunchilicious.ARG_POSITION";
     private static final int QUANTITY_MIN = 1;
     private static final int QUANTITY_MAX = 100;
 
@@ -28,14 +28,16 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
     private String[] foodDescriptions;
     private int[] foodPrices;
     private int[] foodCalories;
+    private int mPosition = 0;
+
+    private OnItemAddedToCartListener mItemAddedToCartListener;
+
     private TextView mFoodNameTextView;
     private TextView mFoodDescriptionTextView;
     private TextView mFoodUnitCostTextView;
     private TextView mFoodCaloriesTextView;
     private NumberPicker mFoodQuantityNumberPicker;
     private Button mAddToCartButton;
-    private int mPosition = 0;
-    private OnItemAddedToCartListener mItemAddedToCartListener;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
