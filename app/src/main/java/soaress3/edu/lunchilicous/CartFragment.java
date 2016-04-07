@@ -1,28 +1,23 @@
 package soaress3.edu.lunchilicous;
 
-import android.app.Activity;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
 
 
-public class CartFragment extends ListFragment {
+public class CartFragment extends ListFragment implements View.OnClickListener{
 
-    public static final String ARG_FOOD_QUANTITIES = "edu.soaress3.lunchilicious.ARG_FOOD_QUANTITIES";
+    public static final String ARG_PURCHASE_ORDER_ID = "edu.soaress3.lunchilicious.ARG_PURCHASE_ORDER_ID";
 
     private String[] mFoodNames;
     private String[] mFoodDescriptions;
@@ -32,6 +27,8 @@ public class CartFragment extends ListFragment {
     private int mOrderTotal;
 
     private TextView mOrderTotalTextView;
+    private Button mCheckoutButton;
+    private DbProvider mDbProvider;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,7 +50,6 @@ public class CartFragment extends ListFragment {
 
         this.mOrderTotal = this.orderTotal();
         */
-        setRetainInstance(true);
 
     }
 
@@ -61,7 +57,15 @@ public class CartFragment extends ListFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_cart, container, false);
         mOrderTotalTextView = (TextView) view.findViewById (R.id.tv_order_total);
+        mCheckoutButton = (Button) view.findViewById(R.id.btn_checkout);
+        mCheckoutButton.setOnClickListener(this);
         return view;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        mDbProvider = (DbProvider) context;
     }
 
     @Override
@@ -86,8 +90,6 @@ public class CartFragment extends ListFragment {
         return menuItems;
     }
 
-
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -103,51 +105,13 @@ public class CartFragment extends ListFragment {
         super.onPrepareOptionsMenu(menu);
     }
 
-    public String[] getmFoodNames() {
-        return mFoodNames;
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.btn_checkout){
+            // start confirmation dialog box
+
+
+        }
     }
 
-    public void setmFoodNames(String[] mFoodNames) {
-        this.mFoodNames = mFoodNames;
-    }
-
-    public String[] getmFoodDescriptions() {
-        return mFoodDescriptions;
-    }
-
-    public void setmFoodDescriptions(String[] mFoodDescriptions) {
-        this.mFoodDescriptions = mFoodDescriptions;
-    }
-
-    public int[] getmFoodPrices() {
-        return mFoodPrices;
-    }
-
-    public void setmFoodPrices(int[] mFoodPrices) {
-        this.mFoodPrices = mFoodPrices;
-    }
-
-    public int[] getmFoodCalories() {
-        return mFoodCalories;
-    }
-
-    public void setmFoodCalories(int[] mFoodCalories) {
-        this.mFoodCalories = mFoodCalories;
-    }
-
-    public int[] getmFoodQuantities() {
-        return mFoodQuantities;
-    }
-
-    public void setmFoodQuantities(int[] mFoodQuantities) {
-        this.mFoodQuantities = mFoodQuantities;
-    }
-
-    public int getmOrderTotal() {
-        return mOrderTotal;
-    }
-
-    public void setmOrderTotal(int mOrderTotal) {
-        this.mOrderTotal = mOrderTotal;
-    }
 }

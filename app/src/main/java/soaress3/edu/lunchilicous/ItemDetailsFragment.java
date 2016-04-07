@@ -1,12 +1,13 @@
 package soaress3.edu.lunchilicous;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -17,20 +18,22 @@ import java.text.NumberFormat;
 
 public class ItemDetailsFragment extends Fragment implements View.OnClickListener{
 
+    private final static String TAG = ItemDetailsFragment.class.getSimpleName();
+
     public interface OnItemAddedToCartListener {
-        void itemAddedToCart (int itemId, int quantity);
+        void itemAddedToCart (FoodMenuItem item, int quantity);
     }
-    public  static final String ARG_POSITION ="edu.soaress3.lunchilicious.ARG_POSITION";
+
+    public  static final String ARG_ITEM_ID ="edu.soaress3.lunchilicious.ARG_ITEM_ID";
     private static final int QUANTITY_MIN = 1;
     private static final int QUANTITY_MAX = 100;
 
-    private String[] foodNames;
-    private String[] foodDescriptions;
-    private int[] foodPrices;
-    private int[] foodCalories;
-    private int mPosition = 0;
+    private int mItemId = 0;
+    private FoodMenuItem mFoodMenuItem;
+    private SQLiteDatabase mReadableDb;
 
     private OnItemAddedToCartListener mItemAddedToCartListener;
+    private DbProvider mDbProvider;
 
     private TextView mFoodNameTextView;
     private TextView mFoodDescriptionTextView;
@@ -46,15 +49,15 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
         setHasOptionsMenu(true);
 
         Bundle bundle = getArguments();
-        if (bundle != null) mPosition = bundle.getInt(this.ARG_POSITION, 0);
+        if (bundle != null) mItemId = bundle.getInt(this.ARG_ITEM_ID, -1);
 
-        populateFoodData ();
     }
 
     @Override
     public void onAttach(Context activity) {
         super.onAttach(activity);
         mItemAddedToCartListener = (OnItemAddedToCartListener) activity;
+        mDbProvider = (DbProvider) activity;
     }
 
     @Override
@@ -74,25 +77,16 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
         mFoodQuantityNumberPicker.setMinValue(QUANTITY_MIN);
         mFoodQuantityNumberPicker.setMaxValue(QUANTITY_MAX);
 
-        updateDisplay(this.mPosition);
-
         return view;
     }
 
-    private void updateDisplay(int position) {
-        if (position >= foodNames.length)   return;
+    private void updateDisplay() {
+        mFoodMenuItem = getFoodItem(mItemId);
 
-        this.mFoodNameTextView.setText(foodNames[position]);
-        this.mFoodDescriptionTextView.setText(foodDescriptions[position]);
-        this.mFoodUnitCostTextView.setText(NumberFormat.getCurrencyInstance().format(foodPrices[position]));
-        this.mFoodCaloriesTextView.setText("Calories: " + foodCalories[position]);
-    }
-
-    private void populateFoodData () {
-        this.foodNames = getResources().getStringArray(R.array.menu_items);
-        this.foodDescriptions = getResources().getStringArray(R.array.item_descriptions);
-        this.foodCalories = getResources().getIntArray(R.array.item_calories);
-        this.foodPrices = getResources().getIntArray(R.array.item_prices);
+        this.mFoodNameTextView.setText(mFoodMenuItem.getmFoodName());
+        this.mFoodDescriptionTextView.setText(mFoodMenuItem.getmFoodDescription());
+        this.mFoodUnitCostTextView.setText(NumberFormat.getCurrencyInstance().format(mFoodMenuItem.getmFoodPrice()));
+        this.mFoodCaloriesTextView.setText("Calories: " + mFoodMenuItem.getmFoodCalories());
     }
 
     private int getItemQuantity (){
@@ -101,6 +95,67 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
 
     @Override
     public void onClick(View v) {
-        mItemAddedToCartListener.itemAddedToCart(mPosition, getItemQuantity());
+        mItemAddedToCartListener.itemAddedToCart(mFoodMenuItem, getItemQuantity());
+    }
+
+    @Override
+    public void onDestroy() {
+        this.mReadableDb = null;
+        super.onDestroy();
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        this.mReadableDb = this.mDbProvider.getReadableDb();
+        updateDisplay();
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    private FoodMenuItem getFoodItem (int itemId){
+        Cursor c = null;
+        FoodMenuItem item = null;
+
+        try {
+            String whereClause = FoodOrderContract.Product._ID + " = ?";
+            String[] whereArgs = new String[] {Integer.toString(itemId)};
+
+            String[] columns = new String[] {
+                    FoodOrderContract.Product.COLUMN_NAME_NAME,
+                    FoodOrderContract.Product.COLUMN_NAME_DESCRIPTION,
+                    FoodOrderContract.Product.COLUMN_NAME_CALORIES,
+                    FoodOrderContract.Product.COLUMN_NAME_PRICE
+            };
+            c = mReadableDb.query(
+                    FoodOrderContract.Product.TABLE_NAME,
+                    columns,
+                    whereClause,
+                    whereArgs,
+                    null,
+                    null,
+                    null
+            );
+
+            int nameIndex = c.getColumnIndex(FoodOrderContract.Product.COLUMN_NAME_NAME);
+            int descriptionIndex = c.getColumnIndex(FoodOrderContract.Product.COLUMN_NAME_DESCRIPTION);
+            int calorieIndex = c.getColumnIndex(FoodOrderContract.Product.COLUMN_NAME_CALORIES);
+            int priceIndex = c.getColumnIndex(FoodOrderContract.Product.COLUMN_NAME_PRICE);
+
+            if (c != null && c.moveToFirst()) {
+                item = new FoodMenuItem(c.getString(nameIndex), c.getString(descriptionIndex),
+                        c.getInt(calorieIndex), c.getDouble(priceIndex));
+
+            } else {
+                Log.e (TAG, "Failed to get menu items");
+            }
+        }
+        catch (Exception ex){
+            Log.e(TAG, "getFoodItem failed: ", ex);
+        }
+        finally {
+            if (c != null){
+                c.close();
+            }
+        }
+        return item;
     }
 }

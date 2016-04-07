@@ -30,7 +30,7 @@ public class CartItemArrayAdapter extends ArrayAdapter<FoodMenuItem> {
     public View getView(int position, View convertView, ViewGroup parent) {
         View rowView = convertView;
 
-        // make's sure each view is initialized only once
+        // makes sure each view is initialized only once
         if (rowView == null) {
             LayoutInflater inflater = context.getLayoutInflater();
             rowView = inflater.inflate(R.layout.view_cart_item, null);

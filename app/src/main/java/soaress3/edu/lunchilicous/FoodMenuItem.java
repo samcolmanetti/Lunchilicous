@@ -1,18 +1,38 @@
 package soaress3.edu.lunchilicous;
 
-public class FoodMenuItem {
-    public String mFoodName;
-    public String mFoodDescription;
-    public int mFoodPrice;
-    public int mFoodCalories;
-    public int mFoodQuantity;
+import java.io.Serializable;
 
-    public FoodMenuItem(String mFoodName, String mFoodDescription, int mFoodCalories, int mFoodPrice, int mFoodQuantity) {
+public class FoodMenuItem implements Serializable{
+    private String mFoodName;
+    private String mFoodDescription;
+    private double mFoodPrice;
+    private int mFoodCalories;
+    private int mFoodQuantity;
+    private int mFoodId;
+
+    public FoodMenuItem () {}
+
+    public FoodMenuItem(String mFoodName, String mFoodDescription, int mFoodCalories,
+                        double mFoodPrice, int mFoodQuantity) {
+
         this.mFoodName = mFoodName;
         this.mFoodDescription = mFoodDescription;
         this.mFoodCalories = mFoodCalories;
         this.mFoodPrice = mFoodPrice;
         this.mFoodQuantity = mFoodQuantity;
+    }
+    public FoodMenuItem(String mFoodName, String mFoodDescription, int mFoodCalories,
+                        double mFoodPrice) {
+
+        this.mFoodName = mFoodName;
+        this.mFoodDescription = mFoodDescription;
+        this.mFoodCalories = mFoodCalories;
+        this.mFoodPrice = mFoodPrice;
+    }
+
+    public FoodMenuItem (String mFoodName, int mFoodId) {
+        this.mFoodName = mFoodName;
+        this.mFoodId = mFoodId;
     }
 
     public String getmFoodName() {
@@ -23,7 +43,7 @@ public class FoodMenuItem {
         return mFoodDescription;
     }
 
-    public int getmFoodPrice() {
+    public double getmFoodPrice() {
         return mFoodPrice;
     }
 
@@ -35,4 +55,11 @@ public class FoodMenuItem {
         return mFoodQuantity;
     }
 
+    public int getmFoodId() {
+        return mFoodId;
+    }
+
+    public void setmFoodId(int mFoodId) {
+        this.mFoodId = mFoodId;
+    }
 }
