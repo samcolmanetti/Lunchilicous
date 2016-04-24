@@ -22,6 +22,8 @@ public final class FoodOrderContract {
         public static final String COLUMN_NAME_LINE_NUMBER = "lineNumber";
         public static final String COLUMN_NAME_PRODUCT_NAME = "productName";
         public static final String COLUMN_NAME_QUANTITY = "quantity";
+        public static final String COLUMN_NAME_PRICE = "price";
+        public static final String COLUMN_NAME_DESCRIPTION = "description";
     }
 
     // PurchaseOrder(_ID, orderDate, totalCost);

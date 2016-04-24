@@ -35,6 +35,13 @@ public class FoodMenuItem implements Serializable{
         this.mFoodId = mFoodId;
     }
 
+    public FoodMenuItem(String mFoodName, String mFoodDescription, double mFoodPrice, int mFoodQuantity) {
+        this.mFoodName = mFoodName;
+        this.mFoodDescription = mFoodDescription;
+        this.mFoodPrice = mFoodPrice;
+        this.mFoodQuantity = mFoodQuantity;
+    }
+
     public String getmFoodName() {
         return mFoodName;
     }

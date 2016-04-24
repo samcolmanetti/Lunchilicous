@@ -39,7 +39,6 @@ public class FoodMenuFragment extends ListFragment {
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        Context context = mActivity.getApplicationContext();
         try {
             mListener = (OnFoodMenuItemSelectedListener) mActivity;
         } catch (ClassCastException e) {

@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class FoodOrderDbOpenHelper extends SQLiteOpenHelper {
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
     public static final String DATABASE_NAME = "FoodOrder.db";
 
     private static final String TEXT_TYPE = " TEXT";
@@ -30,7 +30,9 @@ public class FoodOrderDbOpenHelper extends SQLiteOpenHelper {
             FoodOrderContract.OrderDetails.COLUMN_NAME_PURCHASE_ORDER_ID + INTEGER_TYPE + COMMA +
             FoodOrderContract.OrderDetails.COLUMN_NAME_LINE_NUMBER + INTEGER_TYPE + COMMA +
             FoodOrderContract.OrderDetails.COLUMN_NAME_PRODUCT_NAME + TEXT_TYPE + COMMA +
-            FoodOrderContract.OrderDetails.COLUMN_NAME_QUANTITY + INTEGER_TYPE + ")";
+            FoodOrderContract.OrderDetails.COLUMN_NAME_QUANTITY + INTEGER_TYPE + COMMA +
+            FoodOrderContract.OrderDetails.COLUMN_NAME_PRICE + REAL_TYPE + COMMA +
+            FoodOrderContract.OrderDetails.COLUMN_NAME_DESCRIPTION + TEXT_TYPE + ")";
 
     // PurchaseOrder(_ID, orderDate, totalCost);
     private static final String SQL_CREATE_PURCHASE_ORDER =
@@ -85,6 +87,7 @@ public class FoodOrderDbOpenHelper extends SQLiteOpenHelper {
                 " ('Cheeseburger', 'Bacon cheeseburger with your choice of toppings.', 303, 5), " +
                 " ('Bottled Coke', 'Chilled 16oz. bottle', 184, 2), " +
                 " ('Bottled Water', 'Chilled 24oz. bottle', 0, 1), " +
+                " ('French Fries', 'Large tub of fresh fries', 450, 4), " +
                 " ('Garlic Knots', '3 knots.', 200, 2);" ;
 
         db.execSQL(initInsert);

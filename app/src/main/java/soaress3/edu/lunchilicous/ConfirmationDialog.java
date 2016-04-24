@@ -23,7 +23,6 @@ public class ConfirmationDialog extends DialogFragment {
     public static ConfirmationDialog newInstance(FoodMenuItem item, int quantity) {
         ConfirmationDialog f = new ConfirmationDialog();
 
-        // Supply num input as an argument.
         Bundle args = new Bundle();
         args.putSerializable(ITEM, item);
         args.putInt(QUANTITY, quantity);

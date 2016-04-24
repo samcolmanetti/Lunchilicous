@@ -6,7 +6,7 @@
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/tv_order_total"
+        android:layout_above="@+id/tv_confirm_order_total"
         android:layout_alignParentTop="true"
         android:id="@android:id/list" />
 
@@ -30,7 +30,7 @@
         android:textSize="30sp"
         android:paddingLeft="15dp"
         android:paddingRight="15dp"
-        android:id="@+id/tv_order_total"
+        android:id="@+id/tv_confirm_order_total"
         android:layout_above="@+id/btn_checkout"
         android:layout_alignParentEnd="true" />
 

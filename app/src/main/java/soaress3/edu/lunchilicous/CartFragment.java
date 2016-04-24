@@ -1,8 +1,10 @@
 package soaress3.edu.lunchilicous;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,18 +15,23 @@ import android.widget.TextView;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class CartFragment extends ListFragment implements View.OnClickListener{
 
     public static final String ARG_PURCHASE_ORDER_ID = "edu.soaress3.lunchilicious.ARG_PURCHASE_ORDER_ID";
+    public static final String TAG = "CartFragment";
 
-    private String[] mFoodNames;
-    private String[] mFoodDescriptions;
-    private int[] mFoodPrices;
-    private int[] mFoodCalories;
-    private int[] mFoodQuantities;
-    private int mOrderTotal;
+    private OnCheckoutButtonPressedListener mCheckoutListener;
+
+    public interface OnCheckoutButtonPressedListener {
+        void onCheckoutButtonPressed(Double orderTotal);
+    }
+
+    private Double mOrderTotal;
+    private Integer mPurchaseOrderId = null;
 
     private TextView mOrderTotalTextView;
     private Button mCheckoutButton;
@@ -33,30 +40,20 @@ public class CartFragment extends ListFragment implements View.OnClickListener{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setHasOptionsMenu(true);
 
-        /*
         Bundle bundle = getArguments();
-
         if (bundle != null) {
-            mFoodQuantities = bundle.getIntArray(ARG_FOOD_QUANTITIES);
+            mPurchaseOrderId = bundle.getInt(ARG_PURCHASE_ORDER_ID);
+        } else {
+            Log.e(TAG, "Purchase order id is null");
         }
-
-        this.mFoodNames = getResources().getStringArray(R.array.menu_items);
-        this.mFoodDescriptions = getResources().getStringArray(R.array.item_descriptions);
-        this.mFoodCalories = getResources().getIntArray(R.array.item_calories);
-        this.mFoodPrices = getResources().getIntArray(R.array.item_prices);
-
-        this.mOrderTotal = this.orderTotal();
-        */
-
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_cart, container, false);
-        mOrderTotalTextView = (TextView) view.findViewById (R.id.tv_order_total);
+        mOrderTotalTextView = (TextView) view.findViewById (R.id.tv_confirm_order_total);
         mCheckoutButton = (Button) view.findViewById(R.id.btn_checkout);
         mCheckoutButton.setOnClickListener(this);
         return view;
@@ -66,6 +63,7 @@ public class CartFragment extends ListFragment implements View.OnClickListener{
     public void onAttach(Context context) {
         super.onAttach(context);
         mDbProvider = (DbProvider) context;
+        mCheckoutListener = (OnCheckoutButtonPressedListener) context;
     }
 
     @Override
@@ -73,29 +71,17 @@ public class CartFragment extends ListFragment implements View.OnClickListener{
         return super.onOptionsItemSelected(item);
     }
 
-    private FoodMenuItem[] getFoodMenuItems() {
-        ArrayList<FoodMenuItem> items = new ArrayList<FoodMenuItem>();;
-
-        for (int i = 0; i < mFoodQuantities.length; i++){
-            if (mFoodQuantities[i] > 0){
-                items.add(new FoodMenuItem(mFoodNames[i], mFoodDescriptions[i], mFoodCalories[i],
-                        mFoodPrices[i], mFoodQuantities[i]));
-            }
-        }
-        FoodMenuItem[] menuItems = new FoodMenuItem[items.size()];
-        for (int i = 0; i < items.size(); i++){
-            menuItems[i] = items.get(i);
-        }
-
-        return menuItems;
-    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        CartItemArrayAdapter adapter = new CartItemArrayAdapter(getActivity(), getFoodMenuItems());
+        List<FoodMenuItem> cartItems = getCartItems();
+
+        CartItemArrayAdapter adapter = new CartItemArrayAdapter(getActivity(), cartItems);
         setListAdapter(adapter);
+
+        this.mOrderTotal = getOrderTotal();
         mOrderTotalTextView.setText(NumberFormat.getCurrencyInstance().format(mOrderTotal));
     }
 
@@ -108,10 +94,83 @@ public class CartFragment extends ListFragment implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_checkout){
-            // start confirmation dialog box
-
-
+            mCheckoutListener.onCheckoutButtonPressed(mOrderTotal);
         }
+    }
+
+    private List<FoodMenuItem> getCartItems (){
+        Cursor c = null;
+        List<FoodMenuItem> items = new LinkedList<FoodMenuItem>();
+        try {
+            String selection = FoodOrderContract.OrderDetails.COLUMN_NAME_PURCHASE_ORDER_ID + " = ?";
+            String[] selectionArgs = {Integer.toString(mPurchaseOrderId)};
+
+            c = mDbProvider.getReadableDb().query(
+                FoodOrderContract.OrderDetails.TABLE_NAME,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null,
+                null
+            );
+
+            int nameIndex = c.getColumnIndex(FoodOrderContract.OrderDetails.COLUMN_NAME_PRODUCT_NAME);
+            int descriptionIndex = c.getColumnIndex(FoodOrderContract.OrderDetails.COLUMN_NAME_DESCRIPTION);
+            int priceIndex = c.getColumnIndex(FoodOrderContract.OrderDetails.COLUMN_NAME_PRICE);
+            int quantityIndex = c.getColumnIndex(FoodOrderContract.OrderDetails.COLUMN_NAME_QUANTITY);
+
+            c.moveToFirst();
+            while (!c.isAfterLast()) {
+                items.add(new FoodMenuItem(c.getString(nameIndex), c.getString(descriptionIndex),
+                        c.getDouble(priceIndex), c.getInt(quantityIndex)));
+                c.moveToNext();
+            }
+        }
+        catch (Exception ex){
+            Log.e(TAG, "populateCartItemsList query failed ", ex);
+        }
+        finally {
+            if (c != null){
+                c.close();
+            }
+        }
+        return items;
+    }
+
+    private Double getOrderTotal (){
+        Cursor c = null;
+        Double total = null;
+        try {
+            String selection = FoodOrderContract.PurchaseOrder._ID + " = ?";
+            String[] selectionArgs = {Integer.toString(mPurchaseOrderId)};
+
+            c = mDbProvider.getReadableDb().query(
+                    FoodOrderContract.PurchaseOrder.TABLE_NAME,
+                    new String[] {FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST},
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            int totalIndex = c.getColumnIndex(FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST);
+
+            c.moveToFirst();
+            total = c.getDouble(totalIndex);
+        }
+        catch (Exception ex){
+            Log.e(TAG, "getOrderTotal query failed ", ex);
+        }
+        finally {
+            if (c != null){
+                c.close();
+            }
+        }
+        return total;
     }
 
 }

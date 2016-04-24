@@ -20,15 +20,14 @@ public class MainActivity extends AppCompatActivity implements
         FoodMenuFragment.OnFoodMenuItemSelectedListener,
         ItemDetailsFragment.OnItemAddedToCartListener,
         ConfirmationDialog.MessageDialogHostListener,
+        CartFragment.OnCheckoutButtonPressedListener,
         DbProvider {
 
     private SQLiteDatabase mReadOnlyDb;
     private SQLiteDatabase mWritableDb;
 
-    private CartFragment mCartFragment;
-
     private int mItemId = 0;
-    private Long mPurchaseOrderId;
+    private Integer mPurchaseOrderId;
     private Integer mLineNumber;
 
     @Override
@@ -42,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements
 
         mReadOnlyDb = dbHelper.getReadableDatabase();
         mWritableDb = dbHelper.getWritableDatabase();
+        mPurchaseOrderId = null;
 
         if (findViewById(R.id.food_menu_fragment) == null) {
 
@@ -79,15 +79,21 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
         // shopping cart selected since it's the only item in the menu
+        CartFragment cartFragment = (CartFragment) getSupportFragmentManager().findFragmentByTag("CART");
 
-        if (this.mCartFragment == null) {
-            this.mCartFragment = new CartFragment();
+        if (cartFragment == null) {
+            cartFragment = new CartFragment();
+        }
+
+        if (mPurchaseOrderId != null) {
+            Bundle args = new Bundle();
+            args.putInt(CartFragment.ARG_PURCHASE_ORDER_ID, mPurchaseOrderId);
+            cartFragment.setArguments(args);
         }
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.frame_container, mCartFragment);
+        ft.replace(R.id.frame_container, cartFragment);
         ft.addToBackStack("CART");
         ft.commit();
 
@@ -96,8 +102,14 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onFoodMenuItemSelected(int itemId) {
-        ItemDetailsFragment foodItem = new ItemDetailsFragment();
         this.mItemId = itemId;
+
+        ItemDetailsFragment foodItem = (ItemDetailsFragment) getSupportFragmentManager()
+                .findFragmentByTag("DETAILS");
+
+        if (foodItem == null){
+            foodItem = new ItemDetailsFragment();
+        }
 
         Bundle args = new Bundle();
         args.putInt(ItemDetailsFragment.ARG_ITEM_ID, itemId);
@@ -132,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements
         if (mReadOnlyDb != null) mReadOnlyDb.close();
         if (mWritableDb != null) mWritableDb.close();
 
-        // save updated data in retainedFragment
+        // TODO: save updated data in retainedFragment
 
         super.onDestroy();
     }
@@ -160,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements
                 fm.popBackStackImmediate("DETAILS",fm.POP_BACK_STACK_INCLUSIVE);
 
                 // start new instance of ItemDetailsFragment
-                this.onFoodMenuItemSelected(0);
+                this.onFoodMenuItemSelected(this.mItemId);
             }
         }
     }
@@ -174,14 +186,16 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         try {
-            ContentValues map = new ContentValues(4);
+            ContentValues map = new ContentValues(6);
             map.put(FoodOrderContract.OrderDetails.COLUMN_NAME_PURCHASE_ORDER_ID, mPurchaseOrderId);
             map.put(FoodOrderContract.OrderDetails.COLUMN_NAME_LINE_NUMBER, mLineNumber);
             map.put(FoodOrderContract.OrderDetails.COLUMN_NAME_PRODUCT_NAME, item.getmFoodName());
             map.put(FoodOrderContract.OrderDetails.COLUMN_NAME_QUANTITY, quantity);
+            map.put(FoodOrderContract.OrderDetails.COLUMN_NAME_PRICE, item.getmFoodPrice());
+            map.put(FoodOrderContract.OrderDetails.COLUMN_NAME_DESCRIPTION, item.getmFoodDescription());
+            mWritableDb.insert(FoodOrderContract.OrderDetails.TABLE_NAME, null, map);
 
-            mPurchaseOrderId = mWritableDb.insert(FoodOrderContract.OrderDetails.TABLE_NAME, null, map);
-            mLineNumber++;
+            mLineNumber = mLineNumber + 1;
         } catch (Exception ex){
             Log.e ("MainActivity", "addProductToDatabase insert statement failed: ", ex);
         }
@@ -193,16 +207,20 @@ public class MainActivity extends AppCompatActivity implements
             map.put(FoodOrderContract.PurchaseOrder.COLUMN_NAME_ORDER_DATE, today());
             map.put(FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST, cost);
 
-            mPurchaseOrderId = mWritableDb.insert(FoodOrderContract.PurchaseOrder.TABLE_NAME, null, map);
+            Long tempId = mWritableDb.insert(FoodOrderContract.PurchaseOrder.TABLE_NAME, null, map);
+            mPurchaseOrderId = tempId != null ? tempId.intValue() : null;
+
+            Log.e("MainActivity", "Purchase order id: " + mPurchaseOrderId);
             mLineNumber = 1;
         } catch (Exception ex){
             Log.e ("MainActivity", "addPurchaseOrderRecord insert statement failed: ", ex);
         }
     }
 
-    private void updatePurchaseOrderTotalCost (double cost){
+    private void updatePurchaseOrderTotalCost (double cost) {
         try {
-            String sql = "UPDATE " + FoodOrderContract.PurchaseOrder.TABLE_NAME +
+            String sql =
+                    "UPDATE " + FoodOrderContract.PurchaseOrder.TABLE_NAME +
                     " SET " + FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST + " = " +
                     FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST + " + " + cost + ";";
 
@@ -212,10 +230,29 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    private String today (){
+    private String today() {
         Calendar c = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
         return sdf.format(c.getTime());
     }
 
+    @Override
+    public void onCheckoutButtonPressed(Double orderTotal) {
+        ConfirmationFragment confirmFragment = (ConfirmationFragment) getSupportFragmentManager()
+                .findFragmentByTag("CONFIRM");
+
+        if (confirmFragment == null){
+            confirmFragment = new ConfirmationFragment();
+        }
+
+        Bundle args = new Bundle();
+        args.putInt(ConfirmationFragment.ARG_PURCHASE_ORDER_ID, mPurchaseOrderId);
+        args.putDouble(ConfirmationFragment.ARG_ORDER_TOTAL, orderTotal);
+        confirmFragment.setArguments(args);
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.frame_container, confirmFragment);
+        transaction.addToBackStack("CONFIRM");
+        transaction.commit();
+    }
 }

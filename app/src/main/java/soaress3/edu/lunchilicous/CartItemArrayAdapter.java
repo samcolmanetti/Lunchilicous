@@ -8,10 +8,11 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.text.NumberFormat;
+import java.util.List;
 
 public class CartItemArrayAdapter extends ArrayAdapter<FoodMenuItem> {
     private final Activity context;
-    private FoodMenuItem[] items;
+    private List<FoodMenuItem> items;
 
     static class ViewHolder {
         TextView foodNameTextView;
@@ -20,7 +21,7 @@ public class CartItemArrayAdapter extends ArrayAdapter<FoodMenuItem> {
         TextView foodPriceTextView;
     }
 
-    public CartItemArrayAdapter(Activity context, FoodMenuItem[] items) {
+    public CartItemArrayAdapter(Activity context, List<FoodMenuItem> items) {
         super(context, R.layout.view_cart_item, items);
         this.context = context;
         this.items = items;
@@ -45,7 +46,7 @@ public class CartItemArrayAdapter extends ArrayAdapter<FoodMenuItem> {
         }
 
         ViewHolder holder = (ViewHolder) rowView.getTag();
-        FoodMenuItem item = items[position];
+        FoodMenuItem item = items.get(position);
         holder.foodNameTextView.setText(item.getmFoodName());
         holder.foodDescriptionTextView.setText(item.getmFoodDescription());
         holder.foodQuantityTextView.setText(Integer.toString(item.getmFoodQuantity()));
