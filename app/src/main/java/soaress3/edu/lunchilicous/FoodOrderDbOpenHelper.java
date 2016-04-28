@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class FoodOrderDbOpenHelper extends SQLiteOpenHelper {
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 5;
     public static final String DATABASE_NAME = "FoodOrder.db";
 
     private static final String TEXT_TYPE = " TEXT";
@@ -81,7 +81,7 @@ public class FoodOrderDbOpenHelper extends SQLiteOpenHelper {
                 SINGLE_QUOTE + FoodOrderContract.Product.COLUMN_NAME_CALORIES + SINGLE_QUOTE + COMMA +
                 SINGLE_QUOTE + FoodOrderContract.Product.COLUMN_NAME_PRICE + SINGLE_QUOTE  + ")"
                 + "VALUES " +
-                " ('Pizza', 'A 14in pepperoni with extra pizza.', 285 , 3)," +
+                " ('Pizza', 'A 14in pepperoni pizza with extra cheese.', 285 , 3)," +
                 " ('Sandwich', 'Ham and cheese 12in toasted sub.', 340, 5)," +
                 " ('Pasta', 'Hot spaghetti pasta served with unlimited bread sticks.', 75, 8), " +
                 " ('Cheeseburger', 'Bacon cheeseburger with your choice of toppings.', 303, 5), " +

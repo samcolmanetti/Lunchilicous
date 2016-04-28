@@ -173,4 +173,9 @@ public class CartFragment extends ListFragment implements View.OnClickListener{
         return total;
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mDbProvider = null;
+    }
 }

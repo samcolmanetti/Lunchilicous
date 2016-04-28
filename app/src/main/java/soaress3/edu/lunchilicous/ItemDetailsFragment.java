@@ -30,7 +30,6 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
 
     private int mItemId = 0;
     private FoodMenuItem mFoodMenuItem;
-    private SQLiteDatabase mReadableDb;
 
     private OnItemAddedToCartListener mItemAddedToCartListener;
     private DbProvider mDbProvider;
@@ -99,14 +98,7 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
     }
 
     @Override
-    public void onDestroy() {
-        this.mReadableDb = null;
-        super.onDestroy();
-    }
-
-    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        this.mReadableDb = this.mDbProvider.getReadableDb();
         updateDisplay();
         super.onActivityCreated(savedInstanceState);
     }
@@ -125,7 +117,7 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
                     FoodOrderContract.Product.COLUMN_NAME_CALORIES,
                     FoodOrderContract.Product.COLUMN_NAME_PRICE
             };
-            c = mReadableDb.query(
+            c = mDbProvider.getReadableDb().query(
                     FoodOrderContract.Product.TABLE_NAME,
                     columns,
                     whereClause,
@@ -157,5 +149,11 @@ public class ItemDetailsFragment extends Fragment implements View.OnClickListene
             }
         }
         return item;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mDbProvider = null;
     }
 }

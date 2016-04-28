@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.NumberFormat;
 import java.util.LinkedList;
@@ -19,17 +20,15 @@ import java.util.List;
 
 
 public class ConfirmationFragment extends ListFragment implements View.OnClickListener{
-    static final String TAG = "ConfirmationFragment";
     static final String ARG_PURCHASE_ORDER_ID = "edu.soaress3.lunchilicious.ARG_PURCHASE_ORDER_ID";
     static final String ARG_ORDER_TOTAL = "edu.soaress3.lunchilicious.ARG_ORDER_TOTAL";
-
-    private List<ConfirmationItem> mConfirmationItems;
 
     private TextView mOrderTotalTextView;
     private Button mConfirmButton;
     private DbProvider mDbProvider;
     private Integer mPurchaseOrderId;
     private Double mOrderTotal;
+    private LoadConfirmationItemsTask mConfirmTask;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,10 +65,9 @@ public class ConfirmationFragment extends ListFragment implements View.OnClickLi
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mConfirmTask = new LoadConfirmationItemsTask(this, mDbProvider.getReadableDb());
+        mConfirmTask.execute(mPurchaseOrderId);
 
-        mConfirmationItems = getConfirmationItems();
-        ConfirmationItemArrayAdapter adapter = new ConfirmationItemArrayAdapter(getActivity(), mConfirmationItems);
-        setListAdapter(adapter);
         mOrderTotalTextView.setText(NumberFormat.getCurrencyInstance().format(mOrderTotal));
     }
 
@@ -82,56 +80,15 @@ public class ConfirmationFragment extends ListFragment implements View.OnClickLi
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_confirm){
-            // start confirmation dialog box
+            Toast.makeText(getActivity(), "Order placed successfully", Toast.LENGTH_SHORT).show();
             getActivity().finish();
         }
     }
 
-    private List<ConfirmationItem> getConfirmationItems (){
-        Cursor c = null;
-        List<ConfirmationItem> items = new LinkedList<ConfirmationItem>();
-
-        try {
-            String columns[] = {
-                    FoodOrderContract.OrderDetails.COLUMN_NAME_PRODUCT_NAME,
-                    FoodOrderContract.OrderDetails.COLUMN_NAME_LINE_NUMBER,
-                    FoodOrderContract.OrderDetails.COLUMN_NAME_QUANTITY
-            };
-
-            String selection = FoodOrderContract.OrderDetails.COLUMN_NAME_PURCHASE_ORDER_ID + " = ?";
-            String[] selectionArgs = {Integer.toString(mPurchaseOrderId)};
-
-            c = mDbProvider.getReadableDb().query(
-                    FoodOrderContract.OrderDetails.TABLE_NAME,
-                    columns,
-                    selection,
-                    selectionArgs,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-
-            int nameIndex = c.getColumnIndex(FoodOrderContract.OrderDetails.COLUMN_NAME_PRODUCT_NAME);
-            int lineNumberIndex = c.getColumnIndex(FoodOrderContract.OrderDetails.COLUMN_NAME_LINE_NUMBER);
-            int quantityIndex = c.getColumnIndex(FoodOrderContract.OrderDetails.COLUMN_NAME_QUANTITY);
-
-            c.moveToFirst();
-            while (!c.isAfterLast()) {
-                items.add(new ConfirmationItem(c.getString(nameIndex),c.getInt(lineNumberIndex),
-                        c.getInt(quantityIndex)));
-                c.moveToNext();
-            }
-        }
-        catch (Exception ex){
-            Log.e(TAG, "getConfirmationItems query failed ", ex);
-        }
-        finally {
-            if (c != null){
-                c.close();
-            }
-        }
-        return items;
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mDbProvider = null;
+        if (mConfirmTask != null) mConfirmTask.cancel(true);
     }
-
 }

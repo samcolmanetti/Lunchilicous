@@ -2,20 +2,21 @@ package soaress3.edu.lunchilicous;
 
 import android.app.Activity;
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.util.List;
+
 public class FoodMenuFragment extends ListFragment {
+
     private Activity mActivity = null;
     private OnFoodMenuItemSelectedListener mListener;
     private DbProvider mDbProvider;
+    private LoadMenuTask mLoadMenuTask;
 
-    private FoodMenuItem[] mMenuItems;
+    private List<FoodMenuItem> mMenuItems;
 
     public interface OnFoodMenuItemSelectedListener {
         void onFoodMenuItemSelected(int position);
@@ -31,10 +32,8 @@ public class FoodMenuFragment extends ListFragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mMenuItems = getAllMenuItems();
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, getListOfMenuItems());
-        setListAdapter(adapter);
+        mLoadMenuTask = new LoadMenuTask(this, mDbProvider.getReadableDb());
+        mLoadMenuTask.execute();
     }
 
     @Override
@@ -45,51 +44,17 @@ public class FoodMenuFragment extends ListFragment {
             throw new ClassCastException(mActivity.toString()
                     + " must implement OnFoodMenuItemSelectedListener");
         }
-        mListener.onFoodMenuItemSelected(mMenuItems[position].getmFoodId());
+        mListener.onFoodMenuItemSelected(mMenuItems.get(position).getmFoodId());
     }
 
-    private FoodMenuItem[] getAllMenuItems (){
-        Cursor c = null;
-        FoodMenuItem[] items = null;
-        try {
-            c = mDbProvider.getReadableDb().query(
-                    FoodOrderContract.Product.TABLE_NAME,
-                    new String[]{FoodOrderContract.Product._ID, FoodOrderContract.Product.COLUMN_NAME_NAME},
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-
-            int nameIndex = c.getColumnIndex(FoodOrderContract.Product.COLUMN_NAME_NAME);
-            int idIndex = c.getColumnIndex(FoodOrderContract.Product._ID);
-
-            items = new FoodMenuItem[c.getCount()];
-            c.moveToFirst();
-            for (int i = 0; i < items.length; i++) {
-                items[i] = new FoodMenuItem(c.getString(nameIndex), c.getInt(idIndex));
-                c.moveToNext();
-            }
-        }
-        catch (Exception ex){
-            Log.e("FoodMenuFragment", "getAllMenuItems query failed ", ex);
-        }
-        finally {
-            if (c != null){
-                c.close();
-            }
-        }
-        return items;
+    public void setFoodMenuItems(List<FoodMenuItem> menuItems) {
+        this.mMenuItems = menuItems;
     }
 
-    private String[] getListOfMenuItems (){
-        String[] names = new String[this.mMenuItems.length];
-
-        for (int i = 0; i < mMenuItems.length; i++){
-            names[i] = mMenuItems[i].getmFoodName();
-        }
-
-        return names;
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mDbProvider = null;
+        if (mLoadMenuTask != null) mLoadMenuTask.cancel(true);
     }
 }

@@ -1,20 +1,20 @@
 package soaress3.edu.lunchilicous;
 
+import android.app.FragmentManager;
 import android.content.ContentValues;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements
         FoodMenuFragment.OnFoodMenuItemSelectedListener,
@@ -23,8 +23,10 @@ public class MainActivity extends AppCompatActivity implements
         CartFragment.OnCheckoutButtonPressedListener,
         DbProvider {
 
+    private DatabaseFragment mDbFragment;
     private SQLiteDatabase mReadOnlyDb;
     private SQLiteDatabase mWritableDb;
+
 
     private int mItemId = 0;
     private Integer mPurchaseOrderId;
@@ -37,10 +39,20 @@ public class MainActivity extends AppCompatActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FoodOrderDbOpenHelper dbHelper = new FoodOrderDbOpenHelper (this);
+        FragmentManager fm = getFragmentManager();
+        mDbFragment = (DatabaseFragment) fm.findFragmentByTag("DATABASE");
 
-        mReadOnlyDb = dbHelper.getReadableDatabase();
-        mWritableDb = dbHelper.getWritableDatabase();
+        if (mDbFragment == null){
+            FoodOrderDbOpenHelper dbHelper = new FoodOrderDbOpenHelper (this);
+            mDbFragment = new DatabaseFragment();
+
+            fm.beginTransaction().add(mDbFragment, "DATABASE").commit();
+            mDbFragment.setDatabases(dbHelper.getReadableDatabase(), dbHelper.getWritableDatabase());
+        }
+
+        mReadOnlyDb = mDbFragment.getmReadOnlyDb();
+        mWritableDb = mDbFragment.getmWritableOnlyDb();
+
         mPurchaseOrderId = null;
 
         if (findViewById(R.id.food_menu_fragment) == null) {
@@ -65,8 +77,6 @@ public class MainActivity extends AppCompatActivity implements
             transaction.addToBackStack("DETAILS");
             transaction.commit();
         }
-
-        //int numberOfItems = getResources().getStringArray(R.array.menu_items).length;
 
     }
 
@@ -129,24 +139,25 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onRestoreInstanceState(Bundle restoredInstanceState) {
-       // mFoodItemQuantities = restoredInstanceState.getIntArray(CartFragment.ARG_PURCHASE_ORDER_ID);
         super.onRestoreInstanceState(restoredInstanceState);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle savedInstanceState) {
-        //savedInstanceState.putIntArray(CartFragment.ARG_PURCHASE_ORDER_ID, mFoodItemQuantities);
         super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
     public void onDestroy() {
-        if (mReadOnlyDb != null) mReadOnlyDb.close();
-        if (mWritableDb != null) mWritableDb.close();
-
-        // TODO: save updated data in retainedFragment
-
         super.onDestroy();
+
+        if (this.isFinishing()){
+            mDbFragment = null;
+            if (mReadOnlyDb != null) mReadOnlyDb.close();
+            if (mWritableDb != null) mWritableDb.close();
+        } else {
+            mDbFragment.setDatabases(mReadOnlyDb, mWritableDb);
+        }
     }
 
     @Override
@@ -164,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements
         if (message == ConfirmationDialog.OPTION_YES) { // Add item to cart
             addProductToDatabase(item, quantity);
 
-            FragmentManager fm = getSupportFragmentManager();
+            android.support.v4.app.FragmentManager fm = getSupportFragmentManager();
 
             if (findViewById(R.id.food_menu_fragment) == null){
                 fm.popBackStackImmediate();
@@ -210,7 +221,6 @@ public class MainActivity extends AppCompatActivity implements
             Long tempId = mWritableDb.insert(FoodOrderContract.PurchaseOrder.TABLE_NAME, null, map);
             mPurchaseOrderId = tempId != null ? tempId.intValue() : null;
 
-            Log.e("MainActivity", "Purchase order id: " + mPurchaseOrderId);
             mLineNumber = 1;
         } catch (Exception ex){
             Log.e ("MainActivity", "addPurchaseOrderRecord insert statement failed: ", ex);
@@ -219,10 +229,10 @@ public class MainActivity extends AppCompatActivity implements
 
     private void updatePurchaseOrderTotalCost (double cost) {
         try {
-            String sql =
-                    "UPDATE " + FoodOrderContract.PurchaseOrder.TABLE_NAME +
+            String sql = "UPDATE " + FoodOrderContract.PurchaseOrder.TABLE_NAME +
                     " SET " + FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST + " = " +
-                    FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST + " + " + cost + ";";
+                    FoodOrderContract.PurchaseOrder.COLUMN_NAME_TOTAL_COST + " + " + cost +
+                    " WHERE " + FoodOrderContract.PurchaseOrder._ID + " = " + this.mPurchaseOrderId + ";";
 
             mWritableDb.execSQL(sql);
         } catch (Exception ex){
@@ -232,7 +242,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private String today() {
         Calendar c = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy", Locale.US);
         return sdf.format(c.getTime());
     }
 
